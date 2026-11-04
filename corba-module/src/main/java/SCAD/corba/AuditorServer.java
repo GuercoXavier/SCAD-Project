@@ -20,6 +20,32 @@ public class AuditorServer {
         @Override
         public void dispararAlertaStock(String produto, int quantidadeAtual) {
             System.out.println("[AUDITOR] ⚠️ ALERTA: " + produto + " com stock baixo (" + quantidadeAtual + ")");
+            System.out.println("[AUDITOR] A invocar Spring Boot para compra integrada...");
+
+            try {
+                java.net.URL url = new java.net.URL("http://localhost:8080/api/compras/integrar");
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+
+                String json = "{\"produto\":\"" + produto + "\",\"quantidade\":10,\"fornecedor\":\"Fornecedor ABC\"}";
+                try (java.io.OutputStream os = conn.getOutputStream()) {
+                    os.write(json.getBytes("UTF-8"));
+                }
+
+                int code = conn.getResponseCode();
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(conn.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+                reader.close();
+
+                System.out.println("[AUDITOR] HTTP " + code + " — Resposta: " + sb.toString());
+            } catch (Exception e) {
+                System.err.println("[AUDITOR] Falha ao contactar Spring Boot: " + e.getMessage());
+            }
         }
 
         @Override

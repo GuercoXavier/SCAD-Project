@@ -3,6 +3,7 @@ package scad.webservices.produto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import scad.sbdd.TwoPhaseCommitCoordinator;
 
 import java.util.List;
 import java.util.Map;
@@ -14,13 +15,11 @@ public class ProdutoController {
     @Autowired
     private ProdutoRepository repo;
 
-    // ============ LISTAR TODOS ============
     @GetMapping
     public List<Produto> listar() {
         return repo.listarTodos();
     }
 
-    // ============ BUSCAR POR ID ============
     @GetMapping("/{id}")
     public ResponseEntity<Produto> buscar(@PathVariable int id) {
         return repo.buscarPorId(id)
@@ -28,46 +27,38 @@ public class ProdutoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ============ CRIAR NOVO PRODUTO ============
     @PostMapping
-    public Produto criar(@RequestBody Produto p) {
-        System.out.println("[PRODUTOS] Novo produto: " + p.getNome() + " (" + p.getQuantidade() + ") em " + p.getRegiao());
-        return repo.criar(p);
-    }
-
-    // ============ ATUALIZAR PRODUTO ============
-    @PutMapping("/{id}")
-    public ResponseEntity<Produto> atualizar(@PathVariable int id, @RequestBody Produto p) {
-        return repo.atualizar(id, p)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // ============ APAGAR PRODUTO ============
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> apagar(@PathVariable int id) {
-        boolean ok = repo.apagar(id);
-        if (ok) {
-            return ResponseEntity.ok(Map.of("status", "APAGADO", "id", id));
+    public ResponseEntity<?> criar(@RequestBody Map<String, Object> body) {
+        String nome = (String) body.get("nome");
+        if (nome == null || nome.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "O nome do produto é obrigatório."));
         }
-        return ResponseEntity.notFound().build();
+        int quantidade = body.containsKey("quantidade")
+                ? ((Number) body.get("quantidade")).intValue()
+                : 0;
+        if (quantidade < 0) quantidade = 0;
+
+        int novoId = TwoPhaseCommitCoordinator.inserirProduto(nome.trim(), quantidade);
+        if (novoId < 0) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("erro", "Não foi possível adicionar o produto. Verifique se a base de dados está acessível."));
+        }
+        return ResponseEntity.ok(Map.of(
+                "id", novoId,
+                "nome", nome.trim(),
+                "quantidade", quantidade,
+                "mensagem", "Produto adicionado com sucesso."
+        ));
     }
 
-    // ============ ENTRADA DE STOCK (receção) ============
-    @PostMapping("/{id}/entrada")
-    public ResponseEntity<Produto> entradaStock(@PathVariable int id, @RequestBody Map<String, Integer> body) {
-        int quantidade = body.getOrDefault("quantidade", 0);
-        return repo.atualizarStock(id, quantidade)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // ============ SAÍDA DE STOCK (consumo) ============
-    @PostMapping("/{id}/saida")
-    public ResponseEntity<Produto> saidaStock(@PathVariable int id, @RequestBody Map<String, Integer> body) {
-        int quantidade = body.getOrDefault("quantidade", 0);
-        return repo.atualizarStock(id, -quantidade)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> apagar(@PathVariable int id) {
+        if (repo.buscarPorId(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        boolean ok = TwoPhaseCommitCoordinator.apagarProduto(id);
+        return ok
+                ? ResponseEntity.ok(Map.of("mensagem", "Produto removido."))
+                : ResponseEntity.internalServerError().body(Map.of("erro", "Falha ao remover."));
     }
 }

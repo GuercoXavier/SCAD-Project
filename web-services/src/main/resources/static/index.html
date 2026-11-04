@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCAD - Gestão de Stock</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #f7f7f8; --surface: #ffffff; --border: #e5e5e7;
+            --text: #1a1a1a; --muted: #6b6b6b;
+            --accent: #1e40af; --accent-hover: #1e3a8a;
+            --success: #15803d; --success-bg: #dcfce7;
+            --error: #b91c1c; --error-bg: #fee2e2;
+            --radius: 6px;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;
+        }
+        .header {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 14px 24px; display: flex; align-items: center; gap: 10px;
+        }
+        .header h1 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .header h1 i { color: var(--accent); font-size: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+        @media (max-width: 700px) { .grid-3 { grid-template-columns: 1fr; } }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+        .card:last-child { margin-bottom: 0; }
+        .card-header {
+            padding: 12px 16px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .card-header h2 {
+            font-size: 13px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.4px; display: flex; align-items: center; gap: 8px;
+        }
+        .card-header h2 i { color: var(--muted); font-size: 15px; }
+        .card-body { padding: 16px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+        th {
+            font-weight: 500; color: var(--muted); font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.4px; background: #fafafa;
+        }
+        tr:last-child td { border-bottom: none; }
+        .badge {
+            display: inline-block; padding: 2px 7px; border-radius: 3px;
+            font-size: 11px; font-weight: 500; margin-left: 6px;
+        }
+        .badge-low { background: var(--error-bg); color: var(--error); }
+        .badge-ok { background: var(--success-bg); color: var(--success); }
+        .field { margin-bottom: 14px; }
+        .grid-3 .field { margin-bottom: 0; }
+        .field label {
+            display: block; font-size: 11px; font-weight: 500; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px;
+        }
+        .field select, .field input {
+            width: 100%; padding: 9px 11px; border: 1px solid var(--border);
+            border-radius: var(--radius); font-size: 13px; font-family: inherit;
+            background: var(--surface); color: var(--text);
+        }
+        .field select:focus, .field input:focus { outline: none; border-color: var(--accent); }
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 9px 14px; border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500;
+            cursor: pointer; font-family: inherit; white-space: nowrap;
+        }
+        .btn:hover { background: #f5f5f5; }
+        .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-full { width: 100%; justify-content: center; }
+        .btn-icon { padding: 5px 8px; }
+        .btn-danger { color: var(--error); border-color: var(--border); }
+        .btn-danger:hover { background: var(--error-bg); }
+        .preview {
+            background: #fafafa; border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 10px 12px; font-size: 12px; color: var(--muted); margin-top: 4px;
+        }
+        .preview strong { color: var(--text); }
+        .result {
+            border-radius: var(--radius); padding: 14px 16px; display: flex;
+            align-items: center; gap: 10px; font-size: 14px;
+        }
+        .result.success { background: var(--success-bg); color: var(--success); }
+        .result.error   { background: var(--error-bg);   color: var(--error); }
+        .result i { font-size: 20px; }
+        .result .msg { font-weight: 500; }
+        .details {
+            margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px;
+        }
+        .details summary {
+            cursor: pointer; font-size: 12px; color: var(--muted); list-style: none;
+            display: flex; align-items: center; gap: 6px; user-select: none;
+        }
+        .details summary::-webkit-details-marker { display: none; }
+        .details summary:hover { color: var(--text); }
+        .details[open] summary { margin-bottom: 8px; }
+        .log {
+            font-family: "SF Mono", Consolas, monospace; font-size: 11px;
+            background: #fafafa; border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 10px 12px; max-height: 200px; overflow-y: auto;
+        }
+        .log-line { padding: 2px 0; color: var(--muted); }
+        .log-line.success { color: var(--success); }
+        .log-line.error { color: var(--error); }
+        .empty { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <h1><i class="bi bi-boxes"></i> SCAD &mdash; Gestão de Stock</h1>
+</header>
+
+<main class="container">
+
+    <div class="grid">
+        <section class="card">
+            <div class="card-header">
+                <h2><i class="bi bi-box-seam"></i> Produtos em Armazém</h2>
+                <button class="btn btn-icon" onclick="carregar()" title="Atualizar">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+            <table>
+                <thead>
+                <tr><th>ID</th><th>Produto</th><th>Em stock</th><th style="width:50px;"></th></tr>
+                </thead>
+                <tbody id="tbody">
+                <tr><td colspan="4" class="empty">A carregar...</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2><i class="bi bi-cart-plus"></i> Repor Stock</h2>
+            </div>
+            <div class="card-body">
+                <div class="field">
+                    <label>Produto</label>
+                    <select id="sel-produto" onchange="atualizarPreview()"></select>
+                </div>
+                <div class="field">
+                    <label>Quantidade a repor</label>
+                    <input type="number" id="inp-qtd" value="10" min="1" oninput="atualizarPreview()">
+                </div>
+                <div class="preview" id="preview">Selecione um produto.</div>
+                <button class="btn btn-primary btn-full" id="btn-repor" onclick="repor()" style="margin-top:14px;">
+                    <i class="bi bi-check2"></i> Confirmar Compra ao Fornecedor
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <section class="card">
+        <div class="card-header">
+            <h2><i class="bi bi-plus-circle"></i> Adicionar Novo Produto</h2>
+        </div>
+        <div class="card-body">
+            <div class="grid-3">
+                <div class="field">
+                    <label>Nome do produto</label>
+                    <input type="text" id="inp-nome-novo" placeholder="Ex: Prego" maxlength="100">
+                </div>
+                <div class="field">
+                    <label>Quantidade inicial</label>
+                    <input type="number" id="inp-qtd-nova" value="0" min="0">
+                </div>
+                <button class="btn btn-primary" onclick="criarProduto()" id="btn-criar">
+                    <i class="bi bi-plus-lg"></i> Adicionar
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" id="resultado-card" style="display:none;">
+        <div class="card-body">
+            <div class="result" id="resultado"></div>
+            <details class="details" id="detalhes">
+                <summary><i class="bi bi-info-circle"></i> Ver detalhes técnicos</summary>
+                <div class="log" id="log"></div>
+            </details>
+        </div>
+    </section>
+
+</main>
+
+<script>
+    const API = '';
+    let produtos = [];
+
+    function horaAtual() {
+        return new Date().toTimeString().split(' ')[0];
+    }
+
+    function log(msg, tipo) {
+        const el = document.getElementById('log');
+        const line = document.createElement('div');
+        line.className = 'log-line ' + (tipo || '');
+        line.textContent = '[' + horaAtual() + '] ' + msg;
+        el.appendChild(line);
+    }
+
+    function mostrarResultado(sucesso, mensagem, passos) {
+        document.getElementById('resultado-card').style.display = 'block';
+        document.getElementById('log').innerHTML = '';
+
+        if (passos) {
+            Object.entries(passos).forEach(function(e) {
+                const falhou = /erro|falh/i.test(String(e[1]));
+                log(e[0] + ': ' + e[1], falhou ? 'error' : 'success');
+            });
+        }
+
+        const el = document.getElementById('resultado');
+        if (sucesso) {
+            el.className = 'result success';
+            el.innerHTML = '<i class="bi bi-check-circle-fill"></i><span class="msg">' + mensagem + '</span>';
+        } else {
+            el.className = 'result error';
+            el.innerHTML = '<i class="bi bi-x-circle-fill"></i><span class="msg">' + mensagem + '</span>';
+        }
+    }
+
+    async function carregar() {
+        try {
+            const resp = await fetch(API + '/api/produtos');
+            produtos = await resp.json();
+            const tbody = document.getElementById('tbody');
+
+            if (!produtos.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty">Sem produtos registados</td></tr>';
+                document.getElementById('sel-produto').innerHTML = '';
+                atualizarPreview();
+                return;
+            }
+
+            tbody.innerHTML = produtos.map(function(p) {
+                const baixo = p.quantidade < 10;
+                const badge = baixo
+                    ? '<span class="badge badge-low">Baixo</span>'
+                    : '<span class="badge badge-ok">OK</span>';
+                return '<tr>'
+                    + '<td>' + p.id + '</td>'
+                    + '<td>' + p.nome + '</td>'
+                    + '<td>' + p.quantidade + ' ' + badge + '</td>'
+                    + '<td><button class="btn btn-icon btn-danger" onclick="apagar(' + p.id + ')" title="Remover">'
+                    + '<i class="bi bi-trash"></i></button></td>'
+                    + '</tr>';
+            }).join('');
+
+            const sel = document.getElementById('sel-produto');
+            sel.innerHTML = produtos.map(function(p) {
+                return '<option value="' + p.id + '">' + p.nome + '</option>';
+            }).join('');
+
+            atualizarPreview();
+        } catch (e) {
+            document.getElementById('tbody').innerHTML =
+                '<tr><td colspan="4" class="empty">Erro ao carregar produtos</td></tr>';
+        }
+    }
+
+    function atualizarPreview() {
+        const id = parseInt(document.getElementById('sel-produto').value, 10);
+        const qtd = parseInt(document.getElementById('inp-qtd').value, 10) || 0;
+        const produto = produtos.find(function(p) { return p.id === id; });
+        const el = document.getElementById('preview');
+        if (!produto) { el.textContent = 'Selecione um produto.'; return; }
+        const depois = produto.quantidade + qtd;
+        el.innerHTML = '<strong>' + produto.nome + '</strong> &mdash; '
+            + produto.quantidade + ' em stock, passará a <strong>' + depois + '</strong> unidades.';
+    }
+
+    async function repor() {
+        const id = parseInt(document.getElementById('sel-produto').value, 10);
+        const qtd = parseInt(document.getElementById('inp-qtd').value, 10);
+
+        if (!id) { mostrarResultado(false, 'Selecione um produto.'); return; }
+
+        const btn = document.getElementById('btn-repor');
+        btn.disabled = true;
+        mostrarResultado(true, 'A processar...');
+
+        try {
+            const resp = await fetch(API + '/api/compras/integrar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ produtoId: id, quantidade: qtd })
+            });
+            const r = await resp.json();
+
+            if (r.status === 'SUCESSO') {
+                mostrarResultado(true, r.mensagem || 'Compra realizada.', r.passos);
+            } else {
+                mostrarResultado(false, r.mensagem || 'Não foi possível concluir a compra.', r.passos);
+            }
+            await carregar();
+        } catch (e) {
+            mostrarResultado(false, 'Erro de rede: ' + e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function criarProduto() {
+        const nome = document.getElementById('inp-nome-novo').value.trim();
+        const quantidade = parseInt(document.getElementById('inp-qtd-nova').value, 10) || 0;
+
+        if (!nome) {
+            mostrarResultado(false, 'Indique o nome do produto.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-criar');
+        btn.disabled = true;
+        mostrarResultado(true, 'A adicionar produto...');
+
+        try {
+            const resp = await fetch(API + '/api/produtos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: nome, quantidade: quantidade })
+            });
+            const r = await resp.json();
+
+            if (resp.ok) {
+                document.getElementById('inp-nome-novo').value = '';
+                document.getElementById('inp-qtd-nova').value = '0';
+                await carregar();
+                mostrarResultado(true, 'Produto "' + nome + '" adicionado com ID ' + r.id + '.');
+            } else {
+                mostrarResultado(false, r.erro || 'Não foi possível adicionar o produto.');
+            }
+        } catch (e) {
+            mostrarResultado(false, 'Erro de rede: ' + e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function apagar(id) {
+        if (!confirm('Remover este produto do sistema?')) return;
+
+        try {
+            const resp = await fetch(API + '/api/produtos/' + id, { method: 'DELETE' });
+            if (resp.ok) {
+                await carregar();
+                mostrarResultado(true, 'Produto removido.');
+            } else {
+                mostrarResultado(false, 'Não foi possível remover o produto.');
+            }
+        } catch (e) {
+            mostrarResultado(false, 'Erro de rede: ' + e.message);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregar);
+</script>
+
+</body>
+</html>
