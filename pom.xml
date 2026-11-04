@@ -12,6 +12,8 @@
         <module>sod-core</module>
         <module>sbdd-core</module>
         <module>sbdd-core</module>
+        <module>dfs-core</module>
+        <module>corba-module</module>
     </modules>
 
     <properties>

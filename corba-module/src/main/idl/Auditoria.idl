@@ -1,0 +1,7 @@
+module SCAD {
+    interface Auditoria {
+        long consultarSaldo(in string produto);
+        void dispararAlertaStock(in string produto, in long quantidadeAtual);
+        void registarCompra(in string produto, in long quantidade, in string fornecedor);
+    };
+};

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://scad.webservices/soap"
+           targetNamespace="http://scad.webservices/soap"
+           elementFormDefault="qualified">
+
+    <xs:element name="CompraRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="produto" type="xs:string"/>
+                <xs:element name="quantidade" type="xs:int"/>
+                <xs:element name="fornecedor" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CompraResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="status" type="xs:string"/>
+                <xs:element name="ordemId" type="xs:string"/>
+                <xs:element name="mensagem" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
