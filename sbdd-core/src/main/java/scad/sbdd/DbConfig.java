@@ -16,7 +16,7 @@ package scad.sbdd;
 
 public class DbConfig {
     public static final String USER = "postgres";
-    public static final String PASS = "a_mesma_password_nos_2_pcs";
+    public static final String PASS = "1111";
 
     public static final String[] NODE_URLS = {
             "jdbc:postgresql://192.168.1.10:5432/scad_db",  // PC 1
